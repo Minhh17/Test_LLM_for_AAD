@@ -6,15 +6,22 @@ Mô hình **Transformer Decoder** nhỏ gọn (kiểu GPT-style) phát hiện b�
 ---
 
 ## 1  Pipeline Tổng Thể
-
 ```mermaid
 flowchart LR
-    A[Audio (.wav)] --> B[Trích xuất MFCC]
-    B --> C[K-Means<br>→ token ID]
-    C --> D[Phân loại dữ liệu]
-    D -->|"normal"| E[Label: normal]
-    D -->|"có nhãn lỗi"| F[Label: fault_x]
-    D -->|"chưa gặp"| G[Label: undefined]
-    E & F & G --> H[Tiny Transformer<br>(2 đầu ra)]
-    H --> I[Anomaly Score]
-    H --> J[Predicted Fault Class]
+    %% ---------- 1. Tiền xử lý ----------
+    A["Audio (.wav)"] --> B["MFCC extraction"]
+    B --> C["K-Means<br/>token ID"]
+
+    %% ---------- 2. Gán nhãn ----------
+    C --> D["Data labelling"]
+    D -->|normal|     E["Label: normal"]
+    D -->|fault_x|    F["Label: fault_x"]
+    D -->|undefined|  G["Label: undefined"]
+
+    %% ---------- 3. Huấn luyện ----------
+    E & F & G --> H["Tiny Transformer<br/>2-head"]
+
+    %% ---------- 4. Suy luận ----------
+    H --> I["Anomaly score"]
+    H --> J["Predicted fault class"]
+
