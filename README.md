@@ -1,27 +1,29 @@
-# Tiny-Transformer Audio Anomaly Detector
+# 🔊 Audio Anomaly Detection with a Tiny Transformer
 
-Mô hình **Transformer Decoder** nhỏ gọn (kiểu GPT-style) phát hiện bất thường trong âm thanh
-được biểu diễn dưới dạng chuỗi token rời rạc (từ K-Means clustering trên đặc trưng MFCC hoặc GFCC).
+> **Từ MFCC → Token K-means → Tiny GPT-style Transformer**  
+> Phát hiện & phân loại lỗi âm thanh thời gian thực
 
----
+## 1 · Tổng quan
 
-## 1  Pipeline Tổng Thể
-```mermaid
-flowchart LR
-    %% ---------- 1. Tiền xử lý ----------
-    A["Audio (.wav)"] --> B["MFCC extraction"]
-    B --> C["K-Means<br/>token ID"]
+1. **Rời rạc hoá audio**  
+   - Trích xuất MFCC.  
+   - Gom cụm K-means → chuỗi token cố định chiều dài.  
 
-    %% ---------- 2. Gán nhãn ----------
-    C --> D["Data labelling"]
-    D -->|normal|     E["Label: normal"]
-    D -->|fault_x|    F["Label: fault_x"]
-    D -->|undefined|  G["Label: undefined"]
+2. **Ngữ liệu**  
+   | Loại   | Nhãn gốc | Ghi chú                              |
+   |--------|----------|--------------------------------------|
+   | Bình thường | `normal`   | Hoạt động tiêu chuẩn.           |
+   | Bất thường đã biết | `fault_x` | Có mô tả cụ thể cho từng lỗi. |
+   | Bất thường chưa biết | `undefined` | Sẽ được gán nhãn về sau.     |
 
-    %% ---------- 3. Huấn luyện ----------
-    E & F & G --> H["Tiny Transformer<br/>2-head"]
+3. **Mô hình** – Tiny Transformer decoder (vài block self-attention) với **2 đầu ra song song**  
+   1. **Head #1** – *Language Modeling*  
+      - Softmax → dự đoán **token tiếp theo**.  
+      - Dùng **perplexity / NLL** làm **anomaly score**.  
+   2. **Head #2** – *Fault Classification*  
+      - Softmax → dự đoán **class lỗi** (`fault_x`).  
+      - Chỉ huấn luyện trên mẫu **có nhãn lỗi**.
 
-    %% ---------- 4. Suy luận ----------
-    H --> I["Anomaly score"]
-    H --> J["Predicted fault class"]
-
+<p align="center">
+ <img src="docs/pipeline.svg" width="650" alt="Pipeline overview">
+</p>
